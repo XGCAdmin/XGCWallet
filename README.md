@@ -1,2 +1,2 @@
-# XGCWallet
-XGCWallet for Mobile
+# XGC.mobile
+GreenCoinX - Mobile

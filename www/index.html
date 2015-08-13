@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	<meta charset="utf-8">
+	<title>GreenCoinX</title>
+	<meta name="format-detection" content="telephone=no" />
+	<!-- Sets initial viewport load and disables zooming  -->
+	<meta name="viewport" content="initial-scale=1, maximum-scale=1">
+
+	<!-- Makes your prototype chrome-less once bookmarked to your phone's home screen -->
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+	<!-- Include the compiled Ratchet CSS -->
+
+	<link href="css/ratchet.css" rel="stylesheet">
+	<script>
+		if( navigator.userAgent.match(/Android/i)){
+		document.write('<link href="css/ratchet-theme-android.css"  rel="stylesheet">');
+		}
+		else if( navigator.userAgent.match(/webOS/i)){
+		document.write('<link href="css/ratchet-theme-android.css"  rel="stylesheet">');
+		}
+		else if( navigator.userAgent.match(/iPhone/i)){
+		document.write('<link href="css/ratchet-theme-ios.css"  rel="stylesheet">');
+		}
+		else if( navigator.userAgent.match(/iPad/i)){
+		document.write('<link href="css/ratchet-theme-ios.css"  rel="stylesheet">');
+		}
+		else if( navigator.userAgent.match(/iPod/i)){
+		document.write('<link href="css/ratchet-theme-ios.css"  rel="stylesheet">');
+		}
+		else if( navigator.userAgent.match(/BlackBerry/i)){
+		document.write('<link href="css/ratchet-theme-android.css"  rel="stylesheet">');
+		}
+		else if( navigator.userAgent.match(/Windows Phone/i)){
+		document.write('<link href="css/ratchet-theme-android.css"  rel="stylesheet">');
+		}else{
+		document.write('<link href="css/ratchet-theme-android.css"  rel="stylesheet">');
+		}
+	</script>
+	<link href="css/index.css" rel="stylesheet">
+	<!-- Include the compiled Ratchet JS -->
+	<script type="text/javascript" src="js/jquery.js"></script>	
+	<script type="text/javascript" src="js/ratchet.js"></script>
+	
+	<script type="text/javascript" src="cordova.js"></script>
+	<script type="text/javascript" src="js/index.js"></script>
+	<script type="text/javascript" src="js/html5sql.js"></script>
+	<script type="text/javascript" src="js/data.js"></script>
+	
+	<script type="text/javascript" src='js/lib/btc.js'></script>
+	<script type="text/javascript" src='js/lib/crypto.js'></script>
+	<script type="text/javascript" src='js/lib/bitcoinjs.js'></script>
+	<script type="text/javascript" src='js/qrcode.js'></script>	
+	
+	</head>
+	<body>
+
+	<!-- Make sure all your bars are the first things in your <body> -->
+		<header class="bar bar-nav" style="background-color:#C6D5C6;padding:5px">
+			<span class="icon icon-star pull-right"></span>
+			<h1 class="title"><img src="img/greencoin.png" alt="GreenCoinX">&nbsp;<sup style="color:red;font-weight:bold">XGC</sup></h1>
+			
+		</header>
+		<div class="bar bar-footer">
+			<nav class="bar-tab">
+				<a class="tab-item active" href="#" onclick="app.index();">
+						<span class="icon icon-home"></span>
+						<span class="tab-label">Account</span>
+				</a>
+				<a class="tab-item" href="#" onclick="app.contact();">
+						<span class="icon icon-person"></span>
+						<span class="tab-label">Contacts</span>
+				</a>
+				<a class="tab-item" href="#" onclick="app.send();">
+						<span class="icon icon-up-nav"></span>
+						<span class="tab-label">Send</span>
+				</a>
+				<a class="tab-item" href="#" onclick="app.receive();">
+						<span class="icon icon-download"></span>
+						<span class="tab-label">Receive</span>
+				</a>
+				<a class="tab-item" href="#" onclick="app.settings();">
+						<span class="icon icon-gear"></span>
+						<span class="tab-label">Settings</span>
+				</a>
+			</nav>
+		</div>
+		<!-- Wrap all non-bar HTML in the .content div (this is actually what scrolls) -->
+		<div id="deviceready" class="blink">
+			<p class="event listening">X</p>
+			<p class="event received">GreenCoinX</p>
+		</div>
+		<div class="content" id="content"></div>
+	</body>
+	
+	
+	<script>
+	var MyIP = '';
+	</script>
+	<script type="text/javascript" src="http://l2.io/ip.js?var=MyIP"></script>
+	<script>
+	var storage = "XGC";
+// alert(MyIP);
+	localStorage.setItem(storage+'.settings.IP',MyIP);
+	if (navigator.geolocation) {
+		navigator.geolocation.getCurrentPosition(function(position) {
+		localStorage.setItem(storage+'.settings.latitude',position.coords.latitude);
+		localStorage.setItem(storage+'.settings.longitude',position.coords.longitude);
+	});
+	}
+
+	//alert(localStorage[storage+'.settings.latitude']);
+	//alert(localStorage[storage+'.settings.longitude']);
+
+	</script>
+</html>
