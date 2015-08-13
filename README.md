@@ -1,0 +1,2 @@
+# XGCWallet
+XGCWallet for Mobile
