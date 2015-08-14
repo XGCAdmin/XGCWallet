@@ -9,7 +9,7 @@
     <name>GreenCoinX-Mobile</name>
 
     <description>
-        GreenCoinX - a fully identified, digital virtual crypto national currency
+        GreenCoinX - a fully identified, digital crypto currency
     </description>
 
     <author href="http://greencoinx.com" email="admin@greencoinx.com">
@@ -123,7 +123,7 @@
   <access origin="http://greencoinx.com"/> <!-- allow local pages -->
 		<access origin="https://greencoinx.com" />
 		<access origin="http://l2.io" />
-		<access origin="http://hitarth.com" />
+		<access origin="http://hitarth.org" />
 		<access origin="http://query.yahooapis.com" />
 		<!--
         <access origin="http://phonegap.com" />                    - allow any secure requests to http://phonegap.com/

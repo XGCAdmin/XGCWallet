@@ -49,8 +49,7 @@ var app = { // Application Constructor
 			}
 				html+= '</ul></div> \
 			</div> \
-		<p>&nbsp;</p> \
-		<p>&nbsp;</p> \
+			<p>&nbsp;</p> \
 		';
 		if(app.is_json(localStorage[storage+'.address']))
 		{
@@ -64,12 +63,33 @@ var app = { // Application Constructor
 		}catch(e){
 			return false;
 		}
-
-			
 			$("#content").html(html);
 	},
 	ShowDetails: function(address){
-		alert(address);
+		console.log(address);
+		var  myURL = "https://xgcwallet.org/ex/getbalance/"+address;
+  $.ajax({
+     url: 'http://query.yahooapis.com/v1/public/yql?q=select * from json where url="'+
+					myURL
+					+'"&format=json&callback=',
+					type: 'GET',
+					dataType: 'json',
+					success: function(data){
+						if(data['query']['results']['json']['success']=="1"){
+								var balance = data['query']['results']['json']['balance'];
+								html = '';
+								htmlx += 'Balance: '+balance;
+								$("#content").html(htmlx);
+						}else{
+							htmlx ='<h3 style="color:red">The email '+email+' is not registered with GreenCoinX.</h3>';
+							$("#content").html(htmlx);
+						}
+					},
+						error: function(data){
+							console.log(data);
+						}
+				});
+		$("#content").html(html);
 	},
 	contact: function(){
 		html = '<div class="content-padded"> \
@@ -287,11 +307,12 @@ var app = { // Application Constructor
 
 			html = '<div class="content-padded"> \
 			<h1>Settings</h1> \
-			<a href="#" class="btn btn-outlined btn-block" onclick="app.identification();">Identification</a> \
+			<a href="#" class="btn btn-primary btn-block" onclick="app.password();">check next</a> \
+			<a href="#" class="btn btn-primary btn-block" onclick="app.identification();">Identification</a> \
 			<p>With identification and verification you can use GreenCoinX to send, receive to your contact email and phone number. </p>\
-			<a href="#" class="btn btn-outlined btn-block" onclick="app.wallet();">Wallet</a> \
+			<a href="#" class="btn btn-primary btn-block" onclick="app.wallet();">Wallet</a> \
 			<p>Wallet settings help you decided transaction fees and sync to block chain.</p>\
-			<a href="#" class="btn btn-outlined btn-block" onclick="app.remove();">Remove</a> \
+			<a href="#" class="btn btn-danger btn-block" onclick="app.remove();">Remove</a> \
 			<p>Remove all setting and identification from this mobile. <span style="color:red">DANGER: You will not be able to use any GreenCoinXs stored on this device.</span></p>\
 			<span>IP: '+MyIP+'</span><br>';
 			if(email === null || email === undefined){
@@ -522,7 +543,8 @@ var app = { // Application Constructor
 					error = '';
 					localStorage.setItem(storage+'.settings.phoneNumber',phoneNumber);
 					localStorage.setItem(storage+'.settings.phoneCode',phoneverifycode);					
-					app.addinfo();
+					//app.addinfo();
+					app.password();
 				}else{
 					html = '<div class="content-padded">Unable to verify phone, please connect to internet or try again!</div>';
 					app.codeerror();
@@ -532,6 +554,30 @@ var app = { // Application Constructor
 					console.log(data);
 				}
 		});		
+	},
+	password: function(){
+		html = '\
+			<div class="content-padded"> \
+				<h3>Password</h3><h2> for access the wallet</h2> \
+				<form> \
+					Password:\
+					<input type="password" name="password" id="password" placeholder="" onkeyup="passwordCheck();"/>\
+					<p>Password should be at least 10 digits</p>\
+					Repeat password:\
+					<input type="password" name="password2" id="password2" placeholder="" onkeyup="passwordCheck2();" />\
+					<div id="pwd-container">\
+					<div id="pwstrength_viewport_progress"></div><br>\
+					</div>\
+					\
+					<a href="#" onclick="app.setverification();" class="btn btn-positive btn-block" disabled="disabled" id="startVerification">Se<u>t</u> verification</a> \
+					\
+				</form> \
+				<p>Connected with IP: ' + localStorage[storage+'.settings.IP'] + ', through ' + localStorage[storage+'.settings.org'] + ', '+ localStorage[storage+'.settings.city']+' (' + localStorage[storage+'.settings.latlon']+') ' + localStorage[storage+'.settings.country'] +'. Phone prefix: ' + localStorage[storage+'.settings.phone'] + '</p>\
+				<p>Email: '+localStorage[storage+'.settings.email']+'</p> \
+				<p>Phone: '+localStorage[storage+'.settings.phoneNumber']+' \
+			</div> \
+			';
+			$("#content").html(html);
 	},
 	addinfo: function(){
 		html = '\
@@ -556,6 +602,9 @@ var app = { // Application Constructor
 			var phonecode = localStorage[storage+'.settings.phoneCode'];
 			var code = localStorage[storage+'.settings.code'];
 			var addinfo = $("#addinfo").val();
+			var walletid = guid();
+			
+			
 			
 			var keys = btc.keys(Crypto.SHA256(email+emailcode+phoneNumber+phonecode+code+Crypto.SHA256(email+phoneNumber+code)));
 			var greencoinAddress = keys.pubkey.toString();	
@@ -693,5 +742,30 @@ function guid() {
     s4() + '-' + s4() + s4() + s4();
 }
 
+
+function passwordCheck() {
+	var password = $("#password").val();
+	$("#pwstrength_viewport_progress").html("Password too short!");
+	if($('#password').val().length < 10){
+		$("#pwstrength_viewport_progress").html("Password too short!");
+	}else{
+		$("#pwstrength_viewport_progress").html("Password OK!");
+	}
+}
+
+function passwordCheck2() {
+	var password = $("#password").val();
+	var password2 = $("#password2").val();
+	console.log(password);
+	console.log(password2);
+	$("#pwstrength_viewport_progress").html("Password not matching!");
+	$("#startVerification").attr("disabled","disabled");
+	if(password!=password2){
+		$("#pwstrength_viewport_progress").html("Password not matching!");
+	}else{
+		$("#pwstrength_viewport_progress").html("Password OK!");
+		$("#startVerification").removeAttr("disabled");
+	}
+}
 
 app.initialize();
