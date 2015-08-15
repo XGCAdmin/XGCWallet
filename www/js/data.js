@@ -32,7 +32,7 @@ function readDB(){
 			qrCode.addData(text);
 			qrCode.make();
 			// qrcode
-			xhtml += '<li class="table-view-cell"><code><a href="#" data-id="' + id + '" onclick="app.ShowDetails(this.name);" name="' + address + '">' + address + '</a></code></li>';
+			xhtml += '<li class="table-view-cell"><code><small><a href="#" data-id="' + id + '" onclick="app.ShowDetails(this.name);" name="' + address + '">' + address + '</a></small></code></li>';
 			xhtml += '<li class="table-view-cell" style="text-align:center;">'+qrCode.createImgTag(4)+'</li>';
 		}
 		$("#XGCAddresses").append(xhtml);	

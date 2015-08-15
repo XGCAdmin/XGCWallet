@@ -67,7 +67,8 @@ var app = { // Application Constructor
 	},
 	ShowDetails: function(address){
 		console.log(address);
-		var  myURL = "https://xgcwallet.org/ex/getbalance/"+address;
+		var  myURL = "https://xgcwallet.org/ex/txes/"+address;
+		var html = '';
   $.ajax({
      url: 'http://query.yahooapis.com/v1/public/yql?q=select * from json where url="'+
 					myURL
@@ -77,18 +78,39 @@ var app = { // Application Constructor
 					success: function(data){
 						if(data['query']['results']['json']['success']=="1"){
 								var balance = data['query']['results']['json']['balance'];
-								html = '';
-								htmlx += 'Balance: '+balance;
-								$("#content").html(htmlx);
+								var sent = data['query']['results']['json']['sent'];
+								var received = data['query']['results']['json']['received'];
+								var txes = data['query']['results']['json']['txes'];
+								html += '<h3>Address</h3>';
+								html += '<div style="text-align:center"><strong><code>'+address+'</code></strong></div>';
+								html += '<div class="card" > \
+																<ul class="table-view" id="XGCAddresses"> \
+																	<li class="table-view-cell table-view-divider">Your GreenCoinX accounts</li>\
+																	<li class="table-view-cell">Received <span class="badge">'+parseFloat(received).toFixed(8)+'</span></li>\
+																	<li class="table-view-cell">Sent <span class="badge">'+parseFloat(sent).toFixed(8)+'</span></li>\
+																	<li class="table-view-cell">Balance <span class="badge">'+parseFloat(balance).toFixed(8)+'</span></li>\
+																	</div>';
+							var arrayLength = txes.length;
+								html += '<h4>Transactions</h4> <div class="card" > \
+																 <ul class="table-view" id="XGCAddresses">';
+							for (var i = 0; i < arrayLength; i++) {
+								var time = timeConverter(txes[i]['timestamp'])
+								html += '<li class="table-view-cell">'+txes[i]['type']+':<small>'+time+'</small> <span class="badge">'+(txes[i]['amount']/100000000).toFixed(8)+'</span></li>';
+								//Do something
+							}
+							html += '</div>'
+							$("#content").html(html);						
 						}else{
-							htmlx ='<h3 style="color:red">The email '+email+' is not registered with GreenCoinX.</h3>';
-							$("#content").html(htmlx);
+							html ='<h3 style="color:red">No balance in '+address+'.</h3>';
+							$("#content").html(html);
 						}
 					},
 						error: function(data){
 							console.log(data);
 						}
 				});
+				
+				
 		$("#content").html(html);
 	},
 	contact: function(){
@@ -153,7 +175,7 @@ var app = { // Application Constructor
 								htmlx += '<br>GreenCoinX address: '+GreenCoinXaddress;
 								htmlx += '<br>Country: '+country+ ', IP: ' + ip + '<br>Registered on '+ DateTime;
 								htmlx += '<br>Extra Info: '+extra;
-								htmlx += '<br><a href="#" onclick="app.SendCoins(this.name);" class="btn btn-positive btn-block" name="'+GreenCoinXaddress+'">Send GreenCoinX</a>';
+								htmlx += '<br><a href="#" onclick="app.SendCoins(this.name,\''+email+'\',\''+phone+'\');" class="btn btn-positive btn-block" name="'+GreenCoinXaddress+'">Send GreenCoinX</a>';
 								$("#ResultEmail").html(htmlx);
 						}else{
 							htmlx ='<h3 style="color:red">The email '+email+' is not registered with GreenCoinX.</h3>';
@@ -206,7 +228,7 @@ var app = { // Application Constructor
 								htmlx += '<br>GreenCoinX address: '+GreenCoinXaddress;
 								htmlx += '<br>Country: '+country+ ', IP: ' + ip + '<br>Registered on '+ DateTime;
 								htmlx += '<br>Extra Info: '+extra;
-								htmlx += '<br><a href="#" onclick="app.SendCoins(this.name);" class="btn btn-positive btn-block" name="'+GreenCoinXaddress+'">Send GreenCoinX</a>';
+								htmlx += '<br><a href="#" onclick="app.SendCoins(this.name,"'+email+'","'+phone+'");" class="btn btn-positive btn-block" name="'+GreenCoinXaddress+'">Send GreenCoinX</a>';
 								$("#ResultPhone").html(htmlx);
 						}else{
 							htmlx ='<h3 style="color:red">The phone '+phone+' is not registered with GreenCoinX.</h3>';
@@ -219,8 +241,10 @@ var app = { // Application Constructor
 				});
 				return false;
 	},
-	SendCoins: function(GreenCoinXaddress){
-			alert(GreenCoinXaddress);
+	SendCoins: function(GreenCoinXaddress,email,phone){
+			console.log(GreenCoinXaddress);
+			console.log(email);
+			console.log(phone);
 	},
 	sendToAddress: function(){
 		html = '<div class="content-padded"> \
@@ -767,5 +791,22 @@ function passwordCheck2() {
 		$("#startVerification").removeAttr("disabled");
 	}
 }
+
+
+
+function timeConverter(UNIX_timestamp){
+  var a = new Date(UNIX_timestamp * 1000);
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var year = a.getFullYear();
+  var month = months[a.getMonth()];
+  var date = a.getDate();
+  var hour = a.getHours();
+  var min = a.getMinutes();
+  var sec = a.getSeconds();
+  var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
+  return time;
+}
+
+
 
 app.initialize();
