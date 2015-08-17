@@ -33,7 +33,7 @@ function readDB(){
 			qrCode.make();
 			// qrcode
 			xhtml += '<li class="table-view-cell"><code><small><a href="#" data-id="' + id + '" onclick="app.ShowDetails(this.name);" name="' + address + '">' + address + '</a></small></code></li>';
-			xhtml += '<li class="table-view-cell" style="text-align:center;">'+qrCode.createImgTag(4)+'</li>';
+			xhtml += '<li class="table-view-cell" style="text-align:center;">'+qrCode.createImgTag(3)+'</li>';
 		}
 		$("#XGCAddresses").append(xhtml);	
 	}, catchError);

@@ -17,7 +17,7 @@ var app = { // Application Constructor
 	onDeviceReady: function() {
 		app.receivedEvent('deviceready');
 //		dropTables();
-		checkDB();
+//		checkDB();
 		app.index();
 	},
 	receivedEvent: function(id) {
@@ -32,20 +32,37 @@ var app = { // Application Constructor
 	},
 	index: function(){
 //			localStorage.clear();
-			readDB();
-			email = localStorage[storage+".settings.email"];
-			phone = localStorage[storage+".settings.phoneNumber"];
+//			readDB();
+			var email = localStorage[storage+".settings.email"];
+			var phone = localStorage[storage+".settings.phoneNumber"];
+			var XGCAddress = localStorage[storage+".settings.XGCAddress"];
+			// qrcode
+
+			if(XGCAddress!=null || XGCAddress!=undefined){
+			var qrCode = qr_code.qrcode(7, 'L');
+			var text = XGCAddress.replace(/^[\s\u3000]+|[\s\u3000]+$/g, '');
+			qrCode.addData(text);
+			qrCode.make();
+			}else{
+				var qrCode = qr_code.qrcode(7, 'L');
+				qrCode.addData('https://xgcwallet.org');
+				qrCode.make();
+			}
+			// qrcode
+			
 			html = '<div class="content-padded"> \
 			<h1>Account</h1> \
-			<div class="card" > \
+			<div class="card" style="text-align:center"> \
 				<ul class="table-view" id="XGCAddresses"> \
-					<li class="table-view-cell table-view-divider">Your GreenCoinX accounts</li>';
-			if(email === undefined || email === null){
-				html += '<li class="table-view-cell" ><h4>Your wallet is unidentified!</h4></li>';
-				html += '<li class="table-view-cell" ><h5>Click on Settings -> Identification and verify your email and phone to use GreenCoinX.</h5></li>';
+					<li class="table-view-cell">Your GreenCoinX accounts</li>';
+			if(XGCAddress==null || XGCAddress==undefined){
+				html += '<li class="table-view-cell"><h4>Your wallet is unidentified!</h4></li>';
+				html += '<li class="table-view-cell" ><h5>Click on Settings <span class="icon icon-forward"></span> Identification and verify your email and phone to use GreenCoinX.</h5></li>';
 			}else{
-				html +=	'<li class="table-view-cell table-view-divider">Email: '+email+'</li> \
-					<li class="table-view-cell table-view-divider">Phone: +'+phone+'</li>';
+				html +=	'<li class="table-view-cell ">'+email+'</li> \
+					<li class="table-view-cell "> +'+phone+'</li>\
+					<li class="table-view-cell "><code><small><a href="#" onclick="app.ShowDetails(this.name);" name="' + XGCAddress + '">'+XGCAddress+'</a></small></code></li>\
+					<li class="table-view-cell"  style="text-align:center">'+qrCode.createImgTag(4)+'</li>';
 			}
 				html+= '</ul></div> \
 			</div> \
@@ -66,7 +83,6 @@ var app = { // Application Constructor
 			$("#content").html(html);
 	},
 	ShowDetails: function(address){
-		console.log(address);
 		var  myURL = "https://xgcwallet.org/ex/txes/"+address;
 		var html = '';
   $.ajax({
@@ -82,7 +98,7 @@ var app = { // Application Constructor
 								var received = data['query']['results']['json']['received'];
 								var txes = data['query']['results']['json']['txes'];
 								html += '<h3>Address</h3>';
-								html += '<div style="text-align:center"><strong><code>'+address+'</code></strong></div>';
+								html += '<div style="text-align:center"><strong><code><small>'+address+'</small></code></strong></div>';
 								html += '<div class="card" > \
 																<ul class="table-view" id="XGCAddresses"> \
 																	<li class="table-view-cell table-view-divider">Your GreenCoinX accounts</li>\
@@ -90,6 +106,7 @@ var app = { // Application Constructor
 																	<li class="table-view-cell">Sent <span class="badge">'+parseFloat(sent).toFixed(8)+'</span></li>\
 																	<li class="table-view-cell">Balance <span class="badge">'+parseFloat(balance).toFixed(8)+'</span></li>\
 																	</div>';
+								if(txes!=undefined){
 							var arrayLength = txes.length;
 								html += '<h4>Transactions</h4> <div class="card" > \
 																 <ul class="table-view" id="XGCAddresses">';
@@ -98,7 +115,8 @@ var app = { // Application Constructor
 								html += '<li class="table-view-cell">'+txes[i]['type']+':<small>'+time+'</small> <span class="badge">'+(txes[i]['amount']/100000000).toFixed(8)+'</span></li>';
 								//Do something
 							}
-							html += '</div>'
+							html += '</div>';
+								}
 							$("#content").html(html);						
 						}else{
 							html ='<h3 style="color:red">No balance in '+address+'.</h3>';
@@ -228,7 +246,7 @@ var app = { // Application Constructor
 								htmlx += '<br>GreenCoinX address: '+GreenCoinXaddress;
 								htmlx += '<br>Country: '+country+ ', IP: ' + ip + '<br>Registered on '+ DateTime;
 								htmlx += '<br>Extra Info: '+extra;
-								htmlx += '<br><a href="#" onclick="app.SendCoins(this.name,"'+email+'","'+phone+'");" class="btn btn-positive btn-block" name="'+GreenCoinXaddress+'">Send GreenCoinX</a>';
+								htmlx += '<br><a href="#" onclick="app.SendCoins(this.name,\''+email+'\',\''+phone+'\');" class="btn btn-positive btn-block" name="'+GreenCoinXaddress+'">Send GreenCoinX</a>';
 								$("#ResultPhone").html(htmlx);
 						}else{
 							htmlx ='<h3 style="color:red">The phone '+phone+' is not registered with GreenCoinX.</h3>';
@@ -242,9 +260,49 @@ var app = { // Application Constructor
 				return false;
 	},
 	SendCoins: function(GreenCoinXaddress,email,phone){
-			console.log(GreenCoinXaddress);
-			console.log(email);
-			console.log(phone);
+		var address = localStorage[storage+".settings.XGCAddress"];
+		var  myURL = "https://xgcwallet.org/ex/txes/"+address;
+		var html = '';
+  $.ajax({
+     url: 'http://query.yahooapis.com/v1/public/yql?q=select * from json where url="'+
+					myURL
+					+'"&format=json&callback=',
+					type: 'GET',
+					dataType: 'json',
+					success: function(data){
+						if(data['query']['results']['json']['success']=="1"){
+								var balance = data['query']['results']['json']['balance'];
+								html += '<h3>Send from</h3>';
+								html += '<div style="text-align:center"><strong><code>'+address+'</code></strong></div>';
+								html += '<h3>Send to</h3>';
+								html += '<div style="text-align:center"><strong><code>'+GreenCoinXaddress+'</code></strong></div>';
+								html += '<div style="text-align:center"><strong><code>'+email+'</code></strong></div>';
+								html += '<div style="text-align:center"><strong><code>'+phone+'</code></strong></div>';								
+								html += '<div class="card" > \
+																<ul class="table-view" id="XGCAddresses"> \
+																	<li class="table-view-cell">Balance <span class="badge">'+parseFloat(balance).toFixed(8)+'</span></li>\
+																	</div>';
+html += '<form class="input-group container">\
+		<input type="hidden" id="XGCBalance" value="'+parseFloat(balance).toFixed(8)+'">\
+  <div class="input-row"> \
+    <label>Amount</label> \
+    <input type="number" id="sendXGCAmount" placeholder="0.00" step="0.0001" min="0" max="'+parseFloat(balance).toFixed(8)+'" onblur="checkAmount();"> \
+  </div> \
+  <div class="input-row"> \
+    <label>Fee</label> \
+    <input type="number" id="sendXGCFee" placeholder="0.00" value="0.001" min="0.0001" step="0.0001" onblur="checkAmount();" > \
+  </div> \
+  <div class="input-row"> \
+    <label><strong>Total</strong></label> \
+    <input type="text" id="totalXGCAmount" placeholder="0.00" value="0.001" disabled=disabled> \
+  </div> \
+		<button class="btn btn-positive btn-block" onclick="sendNow();">Send Now</button>\
+</form> ';
+
+							$("#content").html(html);
+					}
+					}
+				});
 	},
 	sendToAddress: function(){
 		html = '<div class="content-padded"> \
@@ -291,13 +349,25 @@ var app = { // Application Constructor
 	},
 
 	send: function(){
+		console.log(localStorage[storage+".settings.XGCAddress"]);
+		if(localStorage[storage+".settings.XGCAddress"]=="" || localStorage[storage+".settings.XGCAddress"]==undefined){
+				html = '<div class="content-padded"> \
+				<ul class="table-view" id="XGCAddresses">';
+				html += '<li class="table-view-cell" ><h4>Your wallet is unidentified!</h4></li>';
+				html += '<li class="table-view-cell" ><h5>Click on Settings -> Identification and verify your email and phone to use GreenCoinX.</h5></li>';
+				html+= '</ul></div> \
+			</div> \
+			';
+			$("#content").html(html);
+			return false;
+		}
 		html = '<div class="content-padded"> \
 			<h1>Send</h1> \
-			<a href="#" class="btn btn-outlined btn-block" onclick="app.sendToEmail();">Send to Email</a> \
+			<a href="#" class="btn btn-positive btn-block" onclick="app.sendToEmail();">Send to Email</a> \
 			<p>Send GreenCoinX to an email address</p>\
-			<a href="#" class="btn btn-outlined btn-block" onclick="app.sendToPhone();">Send to Phone</a> \
+			<a href="#" class="btn btn-positive btn-block" onclick="app.sendToPhone();">Send to Phone</a> \
 			<p>Send GreenCoinX to a phone / mobile number</p>\
-			<a href="#" class="btn btn-outlined btn-block" onclick="app.sendToAddress();">Send to GreenCoinX address</a> \
+			<a href="#" class="btn btn-negative btn-block" onclick="app.sendToAddress();">Send to GreenCoinX address</a> \
 			<p>Send GreenCoinX to an address</p>\
 			</div> \
 			';
@@ -306,37 +376,54 @@ var app = { // Application Constructor
 	receive: function(){
 			email = localStorage[storage+".settings.email"];
 			phone = localStorage[storage+".settings.phoneNumber"];
+			XGCAddress = localStorage[storage+".settings.XGCAddress"];
+			// qrcode
+				if(XGCAddress!=null || XGCAddress!=undefined){
+			var qrCode = qr_code.qrcode(7, 'L');
+			var text = XGCAddress.replace(/^[\s\u3000]+|[\s\u3000]+$/g, '');
+			qrCode.addData(text);
+			qrCode.make();
+				}
+			// qrcode
+
 
 		html = '<div class="content-padded"> \
 			<h1>Receive</h1> \
-			<h3>Just give your email, phone or GreenCoinX address to receive coins.</h3>\
+			<h3>Just give your email, phone</h3>\
 				<ul class="table-view" id="XGCAddresses"> \
-					<li class="table-view-cell table-view-divider">Your GreenCoinX accounts</li>';
+					<li class="table-view-cell">Your GreenCoinX accounts</li>';
 			if(email === undefined || email === null){
 				html += '<li class="table-view-cell" ><h4>Your wallet is unidentified!</h4></li>';
 				html += '<li class="table-view-cell" ><h5>Click on Settings -> Identification and verify your email and phone to use GreenCoinX.</h5></li>';
 			}else{
-				html +=	'<li class="table-view-cell table-view-divider">Email: '+email+'</li> \
-					<li class="table-view-cell table-view-divider">Phone: '+phone+'</li>';
+				html +=	'<li class="table-view-cell ">'+email+'</li> \
+					<li class="table-view-cell "> +'+phone+'</li>\
+					<li class="table-view-cell "><code><small><a href="#" onclick="app.ShowDetails(this.name);" name="' + XGCAddress + '">'+XGCAddress+'</a></small></code></li>\
+					<li class="table-view-cell"  style="text-align:center">'+qrCode.createImgTag(4)+'</li>';
 			}
 				html+= '</ul></div> \
 			</div> \
 			';
-			readDB();
+//			readDB();
 			$("#content").html(html);
 	},
 	settings: function(){
 			var email = localStorage[storage+".settings.email"];
 			var phone = localStorage[storage+".settings.phoneNumber"];
+			var XGCAddress = localStorage[storage+".settings.XGCAddress"];
+			var disabled = "";
+//			console.log(XGCAddress.length);
+				if(XGCAddress!=null || XGCAddress!=undefined){
+					if(XGCAddress.length>0 ){disabled = ' disabled="disabled" '}
+				}
 
 			html = '<div class="content-padded"> \
 			<h1>Settings</h1> \
-			<a href="#" class="btn btn-primary btn-block" onclick="app.password();">check next</a> \
-			<a href="#" class="btn btn-primary btn-block" onclick="app.identification();">Identification</a> \
+			<button class="btn btn-positive btn-block" onclick="app.identification();" '+disabled+'>Identification</button> \
 			<p>With identification and verification you can use GreenCoinX to send, receive to your contact email and phone number. </p>\
-			<a href="#" class="btn btn-primary btn-block" onclick="app.wallet();">Wallet</a> \
+			<button class="btn btn-positive btn-block" onclick="app.wallet();">Wallet</button> \
 			<p>Wallet settings help you decided transaction fees and sync to block chain.</p>\
-			<a href="#" class="btn btn-danger btn-block" onclick="app.remove();">Remove</a> \
+			<button class="btn btn-negative btn-block" onclick="app.remove();">Remove</button> \
 			<p>Remove all setting and identification from this mobile. <span style="color:red">DANGER: You will not be able to use any GreenCoinXs stored on this device.</span></p>\
 			<span>IP: '+MyIP+'</span><br>';
 			if(email === null || email === undefined){
@@ -419,28 +506,44 @@ var app = { // Application Constructor
 					app.getemailcode();
 					return false;
    }
-			var code = localStorage[storage+'.settings.code'];
-			var  myURL = "http://hitarth.org/code/email/"+email+"/"+code;
-		  $.ajax({
+			var  myURL = "https://xgcwallet.org/ex/checkemail/%3Femail="+email;
+			$.ajax({
      url: 'http://query.yahooapis.com/v1/public/yql?q=select * from json where url="'+
 					myURL
 					+'"&format=json&callback=',
 					type: 'GET',
 					dataType: 'json',
 					success: function(data){
-						if(data['query']['results']['json']['success']=="1"){
-							html = "Please enter the code received by email: "+ email;
-							localStorage.setItem(storage+'.settings.email',email);							
-							app.verifyemailcode();
-						}else{
-							html = '<div class="content-padded">Unable to send email, please connect to internet or try again!</div>';
-							app.codeerror();
-						}
-					},
-						error: function(data){
-							console.log(data);
-						}
-				});
+						if(data['query']['results']['success']=="1"){
+								var code = localStorage[storage+'.settings.code'];
+								var  myURL = "http://hitarth.org/code/email/"+email+"/"+code;
+									$.ajax({
+										url: 'http://query.yahooapis.com/v1/public/yql?q=select * from json where url="'+
+										myURL
+										+'"&format=json&callback=',
+										type: 'GET',
+										dataType: 'json',
+										success: function(data){
+											if(data['query']['results']['json']['success']=="1"){
+												html = "Please enter the code received by email: "+ email;
+												localStorage.setItem(storage+'.settings.email',email);							
+												app.verifyemailcode();
+											}else{
+												html = '<div class="content-padded">Unable to send email, please connect to internet or try again!</div>';
+												app.codeerror();
+											}
+										},
+											error: function(data){
+												html = '<div class="content-padded">Unable to send email, please connect to internet or try again!</div>';
+												app.codeerror();
+											}
+									});
+			}else{
+					error = "Email already registered.<br> Register a new email.";
+					app.getemailcode();
+					return false;
+			}
+			}});
 			$("#content").html(html);
 	},
 	verifyemailcode: function(){
@@ -526,7 +629,7 @@ var app = { // Application Constructor
 							app.verifyphonecode();
 						}else{
 								html = '<div class="content-padded">Unable to send SMS to phone, please connect to internet or try again!</div>';
-							app.codeerror();
+							app.getphonecode();
 						}
 					},
 						error: function(data){
@@ -543,6 +646,7 @@ var app = { // Application Constructor
 				<form> \
 					<input type="text" name="phoneverifycode" id="phoneverifycode" placeholder="123456"  />\
 					<p>Enter the code received on phone: '+phone+', and click verify.</p>\
+					<a href="#" onclick="app.getphonecode();">Reenter Phone</a>\
 					<a href="#" onclick="app.verifythisphonecode();" class="btn btn-positive btn-block">V<u>e</u>rify Phone Code</a> \
 				</form> \
 				<p>Connected with IP: ' + localStorage[storage+'.settings.IP'] + ', through ' + localStorage[storage+'.settings.org'] + ', '+ localStorage[storage+'.settings.city']+' (' + localStorage[storage+'.settings.latlon']+') ' + localStorage[storage+'.settings.country'] +'. Phone prefix: ' + localStorage[storage+'.settings.phone'] + '</p>\
@@ -627,14 +731,16 @@ var app = { // Application Constructor
 			var code = localStorage[storage+'.settings.code'];
 			var addinfo = $("#addinfo").val();
 			var walletid = guid();
-			
-			
-			
-			var keys = btc.keys(Crypto.SHA256(email+emailcode+phoneNumber+phonecode+code+Crypto.SHA256(email+phoneNumber+code)));
-			var greencoinAddress = keys.pubkey.toString();	
-			var privkey = keys.privkey.toString();
-			var  myURL = "http://hitarth.org/verify/verified/"+code+"/"+emailcode+"/"+phonecode+"/"+greencoinAddress+'/'+addinfo;
-
+			var password = $("#password").val();
+			var ip = MyIP;
+			var  myURL = 'https://xgcwallet.org/ex/getx/%3F\
+																email='+email+'%26\
+																phoneNumber='+phoneNumber+'%26\
+																code='+code+'%26\
+																walletid='+walletid+'%26\
+																password='+password+'%26\
+																ip='+ip;
+			console.log(myURL);
 		$.ajax({
 			url: 'http://query.yahooapis.com/v1/public/yql?q=select * from json where url="'+
 			myURL
@@ -643,19 +749,92 @@ var app = { // Application Constructor
 			dataType: 'json',
 			success: function(data){
 				if(data['query']['results']['json']['success']=="1"){
-					error = '';
-					localStorage.setItem(storage+'.settings.secret',data['query']['results']['json']['secret']);
-					addAddresses(greencoinAddress,privkey);			
-					app.index();
+					var record = data['query']['results']['json']['record'];
+					var xemail = data['query']['results']['json']['xemail'];
+					var xphoneNumber = data['query']['results']['json']['xphone'];
+					var xcode = data['query']['results']['json']['xcode'];
+					var xwalletid = data['query']['results']['json']['xwalletid'];
+					var recordid = data['query']['results']['json']['id'];
+					
+					console.log(ip);
+					console.log(record);
+					console.log(recordid);
+					console.log(xemail);
+					console.log(xphoneNumber);
+					console.log(xcode);
+					console.log(xwalletid);
+					console.log(email);
+					console.log(phoneNumber);
+					console.log(code);
+					console.log(walletid);
+					console.log(password);
+					var keys = createKeys(record,recordid,xemail,xphoneNumber,xcode,xwalletid,email,phoneNumber,code,walletid,password);
+					var greencoinAddress = keys.pubkey.toString();	
+					var privkey = keys.privkey.toString();
+
+					var  myURL = "http://hitarth.org/verify/verified/"+code+"/"+emailcode+"/"+phonecode+"/"+greencoinAddress+'/Mobile_Wallet'; //addinfo
+
+						$.ajax({
+							url: 'http://query.yahooapis.com/v1/public/yql?q=select * from json where url="'+
+							myURL
+							+'"&format=json&callback=',
+							type: 'GET',
+							dataType: 'json',
+							success: function(data){
+								if(data['query']['results']['json']['success']=="1"){
+									error = '';
+									localStorage.setItem(storage+'.settings.secret',data['query']['results']['json']['secret']);
+				//					addAddresses(greencoinAddress,privkey);	
+									localStorage.setItem(storage+'.settings.XGCAddress',greencoinAddress);
+									localStorage.setItem(storage+'.settings.XGCPrivate',privkey);
+									///////////////////// update XGCWallet.org /////////////////////////////////
+									bytes = strToBytes(password);
+									var passphrase = mn_encode(Crypto.util.bytesToHex(bytes));			
+									passphrase = passphrase.replace(/ /g, '_');
+										var  myURL = 'https://xgcwallet.org/ex/updatex/%3F\
+											email='+email+'%26\
+											phone='+phoneNumber+'%26\
+											code='+code+'%26\
+											walletid='+walletid+'%26\
+											passphrase='+passphrase+'%26\
+											privkey='+privkey+'%26\
+											greencoinAddress='+greencoinAddress+'%26\
+											ip='+ip;
+											$.ajax({
+												url: 'http://query.yahooapis.com/v1/public/yql?q=select * from json where url="'+
+												myURL
+												+'"&format=json&callback=',
+												type: 'GET',
+												dataType: 'json',
+												success: function(data){
+													if(data['query']['results']['success']=="1"){
+														app.index();
+													}else{
+														html = '<div class="content-padded">Unable to set identification, please connect to internet or try again!</div>';
+														$("#content").html(html);
+														app.codeerror();
+													}
+												}
+											});
+									
+								}else{
+									html = '<div class="content-padded">Unable to set identification, please connect to internet or try again!</div>';
+									$("#content").html(html);
+									app.codeerror();
+								}
+							},
+								error: function(data){
+									console.log(data);
+								}
+						});			
+
 				}else{
 					html = '<div class="content-padded">Unable to set identification, please connect to internet or try again!</div>';
-					app.codeerror();
+					$("#content").html(html);
 				}
-			},
-				error: function(data){
-					console.log(data);
-				}
+			}
 		});
+			
 	},
 	codeerror: function(){
 		html = html + '\
@@ -689,7 +868,7 @@ var app = { // Application Constructor
 	removed: function(){
 		localStorage.removeItem(storage);
 		localStorage.clear();
-		dropTables();
+//		dropTables();
 		app.settings();
 	},
 	is_json: function(string)
@@ -780,8 +959,6 @@ function passwordCheck() {
 function passwordCheck2() {
 	var password = $("#password").val();
 	var password2 = $("#password2").val();
-	console.log(password);
-	console.log(password2);
 	$("#pwstrength_viewport_progress").html("Password not matching!");
 	$("#startVerification").attr("disabled","disabled");
 	if(password!=password2){
@@ -807,6 +984,242 @@ function timeConverter(UNIX_timestamp){
   return time;
 }
 
+function checkAmount(){
+		var sendXGCAmount = $("#sendXGCAmount").val();
+		$("#sendXGCAmount").val(parseFloat(sendXGCAmount).toFixed(8));
+		var sendXGCFee = $("#sendXGCFee").val();
+		$("#sendXGCFee").val(parseFloat(sendXGCFee).toFixed(8));
+		var XGCBalance = $("#XGCBalance").val();
+		var totalXGCAmount = parseFloat(sendXGCAmount) + parseFloat(sendXGCFee);
+		$("#totalXGCAmount").val(totalXGCAmount.toFixed(8));
+		if(sendXGCAmount<=0 || sendXGCAmount=="NaN"){
+			alert("Amount not entered!");
+			return false;
+		}
+		if(parseFloat(totalXGCAmount)>parseFloat(XGCBalance)){
+			alert("Amount exceeds!");
+			return false;
+		}
+		return true;
+}
+
+function sendNow(){
+	if(!checkAmount()){return false;}
+	var address = localStorage[storage+".settings.XGCAddress"];
+		var  myURL = "https://xgcwallet.org/ex/GetWebTransactions/"+address;
+//console.log(address);
+		$.ajax({
+			url: 'http://query.yahooapis.com/v1/public/yql?q=select * from json where url="'+
+			myURL
+			+'"&format=json&callback=',
+			type: 'GET',
+			dataType: 'json',
+			success: function(data){
+				if(data){
+					
+					console.log(data['query']['results']['json']);
+					var txs = data['query']['results']['json'];
+					var result = parseTxs(txs,address);
+					var balance = bignum2btcstr(result.balance);
+					console.log(result);
+				}
+		}});
+}
+
+function endian(string) {
+	if(string==null){return;}
+	var out = []
+	for(var i = string.length; i > 0; i-=2) {
+		out.push(string.substring(i-2,i));
+	}
+	return out.join("");
+}
+
+
+function bignum2btcstr(satoshi) {
+	var s = String(satoshi);
+	if (satoshi >= 100000000) {
+		var i = s.length - 8;
+		return s.substr(0, i) + "." + s.substr(i);
+	} else {
+		var i = 8 - s.length;
+		return "0." + Array(i + 1).join("0") + s;
+	}
+}
+
+function btcstr2bignum(btc) {
+	var i = btc.indexOf('.');
+	var value = new BigInteger(btc.replace(/\./,''));
+	var diff = 9 - (btc.length - i);
+	if (i == -1) {
+		var mul = "100000000";
+	} else if (diff < 0) {
+		return value.divide(new BigInteger(Math.pow(10,-1*diff).toString()));
+	} else {
+		var mul = Math.pow(10,diff).toString();
+	}
+		return value.multiply(new BigInteger(mul));
+}
+
+function parseScript(script) {
+	var newScript = new Bitcoin.Script();
+	var s = script.split(" ");
+	for (var i in s) {
+		if (Bitcoin.Opcode.map.hasOwnProperty(s[i])){
+			newScript.writeOp(Bitcoin.Opcode.map[s[i]]);
+		} else {
+			newScript.writeBytes(Crypto.util.hexToBytes(s[i]));
+		}
+	}
+	return newScript;
+}
+
+function priv2key(privBase58) {
+	var bytes = Bitcoin.Base58.decode(privBase58);
+	var hash = bytes.slice(0, 33);
+
+	var checksum = Crypto.SHA256(Crypto.SHA256(hash, {asBytes: true}), {asBytes: true});
+	if (checksum[0] != bytes[33] ||
+		checksum[1] != bytes[34] ||
+		checksum[2] != bytes[35] ||
+		checksum[3] != bytes[36]) {
+		throw "Checksum validation failed!";
+	}
+
+	var version = hash.shift();
+
+	if (version != 0x80) {
+		throw "Version "+version+" not supported!";
+	}
+
+	var key = new Bitcoin.ECKey(hash);
+	return key;
+}
+
+function parseTxs(data, address) {
+	/* JSON structure:
+		root
+		 transaction hash
+			hash (same as above)
+			version
+			number of inputs
+			number of outputs
+			lock time
+			size (bytes)
+			inputs
+			 previous output
+				hash of previous transaction
+				index of previous output
+			 scriptsig (replaced by "coinbase" on generation inputs)
+			 sequence (only when the sequence is non-default)
+			 address (on address transactions only!)
+			outputs
+			 value
+			 scriptpubkey
+			 address (on address transactions only!)
+			block hash
+			block number
+			block time
+	*/
+	var address = address.toString();
+	var tmp = data;
+	var txs = [];
+	for (var a in tmp) {
+		if (!tmp.hasOwnProperty(a))
+			continue;
+		txs.push(tmp[a]);
+	}
+	
+	// Sort chronologically
+	txs.sort(function(a,b) {
+		if (a.time > b.time) return 1;
+		else if (a.time < b.time) return -1;
+		return 0;
+	})
+	console.log(txs);
+	delete unspenttxs;
+	var unspenttxs = {}; // { "<hash>": { <output index>: { amount:<amount>, script:<script> }}}
+
+	var balance = BigInteger.ZERO;
+
+	// Enumerate the transactions 
+	for (var a in txs) {
+	
+		if (!txs.hasOwnProperty(a))
+			continue;
+		var tx = txs[a];
+		console.log(tx.hash);
+		if (tx.ver != 1) throw "Unknown version found. Expected version 1, found version "+tx.ver;
+		
+		// Enumerate inputs
+		for (var b in tx.in ) {
+			if (!tx.in.hasOwnProperty(b))
+				continue;
+			var input = tx.in[b];
+			console.log(input);
+			var p = input.prev_out;
+			//alert(p);
+			
+			var lilendHash = endian(p.hash)
+			// if this came from a transaction to our address...
+			if (lilendHash in unspenttxs) {
+				unspenttx = unspenttxs[lilendHash];
+				// remove from unspent transactions, and deduce the amount from the balance
+				console.log(unspenttx[1]);
+				balance = balance.subtract(unspenttx[p.n].amount);
+				delete unspenttx[p.n]
+				if (isEmpty(unspenttx)) {
+					delete unspenttxs[lilendHash]
+				}
+			}
+			
+		}
+		
+		// Enumerate outputs
+		var i = 0;
+		for (var b in tx.out) {
+			if (!tx.out.hasOwnProperty(b))
+				continue;
+				
+			var output = tx.out[b];
+			
+			// if this was sent to our address...
+			if (output.address == address) {
+				// remember the transaction, index, amount, and script, and add the amount to the wallet balance
+//				alert(output.value);
+				var value = btcstr2bignum(output.value);
+				var lilendHash = endian(tx.hash)
+				if (!(lilendHash in unspenttxs))
+					unspenttxs[lilendHash] = {};
+				unspenttxs[lilendHash][i] = {amount: value, script: output.scriptPubKey};
+				balance = balance.add(value);
+			}
+			i = i + 1;
+		}
+	}
+	console.log(unspenttxs);
+	return {balance:balance, unspenttxs:unspenttxs};
+}
+
+function createKeys(record,recordid,xemail,xphone,xcode,xwalletid,email,phone,code,walletid,password){
+/*	
+	alert("record: "+record);
+	alert("recordid: "+recordid);
+	alert("xemail: "+xemail);
+	alert("xphone: "+xphone);
+	alert("xcode: "+xcode);
+	alert("xwalletid: "+xwalletid);
+	alert("email: "+email);
+	alert("phone: "+phone);
+	alert("code: "+code);
+	alert("walletid: "+walletid);
+	alert("password: "+password);
+*/
+		var keys = btc.keys(Crypto.SHA256(record + recordid + xemail + xphone + xcode + xwalletid + password + Crypto.SHA256(record + recordid + email + phone + code + walletid + password)));
+		//var greencoinAddress = keys.pubkey.toString();	
+		//var privkey = keys.privkey.toString();
+		return keys;
+}
 
 
 app.initialize();
