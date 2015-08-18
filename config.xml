@@ -3,17 +3,17 @@
 <!-- config.xml reference: https://build.phonegap.com/docs/config-xml -->
 <widget xmlns     = "http://www.w3.org/ns/widgets"
         xmlns:gap = "http://phonegap.com/ns/1.0"
-        id        = "com.greencoinx.mobile"
+        id        = "org.xgcwallet.mobile"
         version   = "1.0.0">
 
-    <name>GreenCoinX-Mobile</name>
+    <name>GreenCoinX-XGCWallet</name>
 
     <description>
-        GreenCoinX - a fully identified, digital crypto currency
+        GreenCoinX - a fully identified, digital crypto currency Mobile Wallet
     </description>
 
-    <author href="http://greencoinx.com" email="admin@greencoinx.com">
-		GreenCoinX-Nilam Doctor
+    <author href="https://xgcwallet.org" email="admin@xgcwallet.org">
+		GreenCoinX - XGC Wallet
     </author>
 
     <!--
@@ -88,7 +88,8 @@
 				<gap:platform name="winphone" />
 				<gap:platform name="wp8" />
 				<gap:platform name="windows" />
-				<gap:plugin name="org.apache.cordova.contacts" />
+				<gap:plugin name="org.apache.cordova.contacts" version="0.2.13" />
+
 				<plugin
         name="NetworkStatus"
         value="org.apache.cordova.network-information" />
@@ -120,7 +121,7 @@
 
         Otherwise, you can specify specific domains:
     -->
-  <access origin="http://greencoinx.com"/> <!-- allow local pages -->
+  <access origin="https://xgcwallet.org"/> <!-- allow local pages -->
 		<access origin="https://greencoinx.com" />
 		<access origin="http://l2.io" />
 		<access origin="http://hitarth.org" />

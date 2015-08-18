@@ -1017,7 +1017,7 @@ function sendNow(){
 			success: function(data){
 				if(data){
 					
-					console.log(data['query']['results']['json']);
+					console.log(data);
 					var txs = data['query']['results']['json'];
 					var result = parseTxs(txs,address);
 					var balance = bignum2btcstr(result.balance);
