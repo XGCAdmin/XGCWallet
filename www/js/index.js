@@ -284,6 +284,7 @@ var app = { // Application Constructor
 																	</div>';
 html += '<form class="input-group container">\
 		<input type="hidden" id="XGCBalance" value="'+parseFloat(balance).toFixed(8)+'">\
+		<input type="hidden" id="toAddress" value="'+GreenCoinXaddress+'">\
   <div class="input-row"> \
     <label>Amount</label> \
     <input type="number" id="sendXGCAmount" placeholder="0.00" step="0.0001" min="0" max="'+parseFloat(balance).toFixed(8)+'" onblur="checkAmount();"> \
@@ -731,7 +732,10 @@ html += '<form class="input-group container">\
 			var code = localStorage[storage+'.settings.code'];
 			var addinfo = $("#addinfo").val();
 			var walletid = guid();
+			localStorage.setItem(storage+'.settings.walletid',walletid);
+			
 			var password = $("#password").val();
+			localStorage.setItem(storage+'.settings.password',password);
 			var ip = MyIP;
 			var  myURL = 'https://xgcwallet.org/ex/getx/%3F\
 																email='+email+'%26\
@@ -740,7 +744,7 @@ html += '<form class="input-group container">\
 																walletid='+walletid+'%26\
 																password='+password+'%26\
 																ip='+ip;
-			console.log(myURL);
+			//console.log(myURL);
 		$.ajax({
 			url: 'http://query.yahooapis.com/v1/public/yql?q=select * from json where url="'+
 			myURL
@@ -755,19 +759,17 @@ html += '<form class="input-group container">\
 					var xcode = data['query']['results']['json']['xcode'];
 					var xwalletid = data['query']['results']['json']['xwalletid'];
 					var recordid = data['query']['results']['json']['id'];
-					
-					console.log(ip);
-					console.log(record);
-					console.log(recordid);
-					console.log(xemail);
-					console.log(xphoneNumber);
-					console.log(xcode);
-					console.log(xwalletid);
-					console.log(email);
-					console.log(phoneNumber);
-					console.log(code);
-					console.log(walletid);
-					console.log(password);
+			
+				// write all to storage 
+					localStorage.setItem(storage+'.settings.record',record);									
+					localStorage.setItem(storage+'.settings.recordid',recordid);									
+					localStorage.setItem(storage+'.settings.xemail',xemail);									
+					localStorage.setItem(storage+'.settings.xphoneNumber',xphoneNumber);									
+					localStorage.setItem(storage+'.settings.xcode',xcode);									
+					localStorage.setItem(storage+'.settings.xwalletid',xwalletid);									
+					localStorage.setItem(storage+'.settings.walletid',walletid);									
+					localStorage.setItem(storage+'.settings.password',password);									
+
 					var keys = createKeys(record,recordid,xemail,xphoneNumber,xcode,xwalletid,email,phoneNumber,code,walletid,password);
 					var greencoinAddress = keys.pubkey.toString();	
 					var privkey = keys.privkey.toString();
@@ -1005,10 +1007,32 @@ function checkAmount(){
 
 function sendNow(){
 	if(!checkAmount()){return false;}
+	
+		var x_record = localStorage[storage+".settings.record"];
+		var x_recordid = localStorage[storage+".settings.recordid"];
+		var x_xemail = localStorage[storage+".settings.xemail"];		
+		var x_xphone = localStorage[storage+".settings.xphone"];
+		var x_xcode = localStorage[storage+".settings.xcode"];
+		var x_xwalletid = localStorage[storage+".settings.xwalletid"];
+		var x_email = localStorage[storage+".settings.email"];
+		var x_phone = localStorage[storage+".settings.phoneNumber"];
+		var x_code = localStorage[storage+".settings.code"];
+		var x_walletid = localStorage[storage+".settings.walletid"];
+		var x_password = localStorage[storage+".settings.password"];
+		
+	var keys = createKeys(x_record,x_recordid,x_xemail,x_xphone,x_xcode,x_xwalletid,x_email,x_phone,x_code,x_walletid,x_password);
+		console.log(keys.pubkey.toString());
+		console.log(keys.privkey.toString());
+// to change when we get the private key NILAM
+		key = priv2key(keys.privkey.toString());		
+
+	
+	
 	var address = localStorage[storage+".settings.XGCAddress"];
 		var  myURL = "https://xgcwallet.org/ex/GetWebTransactions/"+address;
-//console.log(address);
-		$.ajax({
+
+	
+	$.ajax({
 			url: 'http://query.yahooapis.com/v1/public/yql?q=select * from json where url="'+
 			myURL
 			+'"&format=json&callback=',
@@ -1016,13 +1040,58 @@ function sendNow(){
 			dataType: 'json',
 			success: function(data){
 				if(data){
-					
-					console.log(data);
-					var txs = data['query']['results']['json'];
+					var txs = data['query']['results']['json']['txes'];
 					var result = parseTxs(txs,address);
 					var balance = bignum2btcstr(result.balance);
-					console.log(result);
+					unspenttxs = result.unspenttxs;
+		
+					var sendXGCAmount = $("#sendXGCAmount").val();
+					$("#sendXGCAmount").val(parseFloat(sendXGCAmount).toFixed(8));
+					var sendXGCFee = $("#sendXGCFee").val();
+					$("#sendXGCFee").val(parseFloat(sendXGCFee).toFixed(8));
+					var XGCBalance = $("#XGCBalance").val();
+					var totalXGCAmount = parseFloat(sendXGCAmount) + parseFloat(sendXGCFee);
+					$("#totalXGCAmount").val(totalXGCAmount.toFixed(8));					
+					
+					var toAddress = $("#toAddress").val();
+					var toAmount = $("#sendXGCAmount").val();
+					var ownAddress = address;
+					var XGCFee = $("#sendXGCFee").val();
+					console.log("Address");
+					console.log(toAddress);
+					console.log("toAmount");
+					console.log(toAmount);
+					console.log("toFee");
+					console.log(XGCFee);
+
+					var tx = createSend(toAddress, ownAddress, btcstr2bignum(toAmount), btcstr2bignum(XGCFee));					
+					console.log("tx");
+					console.log(tx);
+					var s = tx.serialize();
+					var  myURL = 'https://xgcwallet.org/ex/pushtx/%3F\
+											tx='+Crypto.util.bytesToHex(s);
+					
+//					console.debug(s);
+	$.ajax({
+			url: 'http://query.yahooapis.com/v1/public/yql?q=select * from json where url="'+
+			myURL
+			+'"&format=json&callback=',
+			type: 'GET',
+			dataType: 'json',
+			success: function(data){
+				if(data){
+					if(data['query']['results']['json']['success']==1){
+						alert("Transaction:" + data['query']['results']['json']['txid']);
+						app.index();
+					}else{
+						alert("Unable to send! Try again");
+					}
+				}}});
+
+//					document.resultForm.Transaction.value = Crypto.util.bytesToHex(s);
+
 				}
+				
 		}});
 }
 
@@ -1065,10 +1134,12 @@ function parseScript(script) {
 	var newScript = new Bitcoin.Script();
 	var s = script.split(" ");
 	for (var i in s) {
-		if (Bitcoin.Opcode.map.hasOwnProperty(s[i])){
-			newScript.writeOp(Bitcoin.Opcode.map[s[i]]);
-		} else {
-			newScript.writeBytes(Crypto.util.hexToBytes(s[i]));
+		if(i!='remove'){
+			if (Bitcoin.Opcode.map.hasOwnProperty(s[i])){
+				newScript.writeOp(Bitcoin.Opcode.map[s[i]]);
+			} else {
+				newScript.writeBytes(Crypto.util.hexToBytes(s[i]));
+			}
 		}
 	}
 	return newScript;
@@ -1127,7 +1198,9 @@ function parseTxs(data, address) {
 	for (var a in tmp) {
 		if (!tmp.hasOwnProperty(a))
 			continue;
-		txs.push(tmp[a]);
+		a = a.replace("X","");
+		console.log(a);
+		txs.push(tmp["X"+a]);
 	}
 	
 	// Sort chronologically
@@ -1148,16 +1221,17 @@ function parseTxs(data, address) {
 		if (!txs.hasOwnProperty(a))
 			continue;
 		var tx = txs[a];
-		console.log(tx.hash);
+//		console.log(tx.hash);
 		if (tx.ver != 1) throw "Unknown version found. Expected version 1, found version "+tx.ver;
 		
 		// Enumerate inputs
 		for (var b in tx.in ) {
 			if (!tx.in.hasOwnProperty(b))
 				continue;
+//			console.log(b);
 			var input = tx.in[b];
-			console.log(input);
-			var p = input.prev_out;
+//			console.log(input);
+			var p = input;//.prev_out;
 			//alert(p);
 			
 			var lilendHash = endian(p.hash)
@@ -1197,7 +1271,7 @@ function parseTxs(data, address) {
 			i = i + 1;
 		}
 	}
-	console.log(unspenttxs);
+//	console.log(unspenttxs);
 	return {balance:balance, unspenttxs:unspenttxs};
 }
 
@@ -1221,5 +1295,88 @@ function createKeys(record,recordid,xemail,xphone,xcode,xwalletid,email,phone,co
 		return keys;
 }
 
+function createSend(address, changeAddress, sendValue, feeValue) {
+		changeAddress = new Bitcoin.Address(changeAddress);
+		address = new Bitcoin.Address(address);
+//	console.log('changeAddress');
+//	console.log(changeAddress);
+//	console.log('Address');
+//	console.log(address);
+
+		var selectedOuts = [];
+  var txValue = sendValue.add(feeValue);
+//	console.log('txValue');
+//	console.log(txValue);
+		
+		var availableValue = BigInteger.ZERO;
+//	console.log('availableValue');
+//	console.log(availableValue);
+		
+		for (var hash in unspenttxs) {
+			if (!unspenttxs.hasOwnProperty(hash))
+				continue;
+			for (var index in unspenttxs[hash]) {
+				if (!unspenttxs[hash].hasOwnProperty(index))
+					continue;
+				var script = parseScript(unspenttxs[hash][index].script);
+				var b64hash = Crypto.util.bytesToBase64(Crypto.util.hexToBytes(hash));
+				selectedOuts.push(new Bitcoin.TransactionIn({outpoint: {hash: b64hash, index: index}, script: script, sequence: 4294967295}));
+				availableValue = availableValue.add(unspenttxs[hash][index].amount);
+				if (availableValue.compareTo(txValue) >= 0) break;
+			}
+		}
+		
+		
+		console.log (bignum2btcstr(availableValue));
+		console.log(bignum2btcstr(txValue));
+		if (availableValue.compareTo(txValue) < 0) {
+				throw new Error('Insufficient funds.');
+		}
+
+
+		var changeValue = availableValue.subtract(txValue);
+
+		var sendTx = new Bitcoin.Transaction();
+
+		for (var i = 0; i < selectedOuts.length; i++) {
+			sendTx.addInput(selectedOuts[i]);
+		}
+//		console.log("add one output");
+//console.log(address);
+//console.log(bignum2btcstr(sendValue));
+		sendTx.addOutput(address, sendValue);
+//console.log("addoutput change output ");		
+//console.log(changeValue.compareTo(BigInteger.ZERO));
+//console.log(changeAddress);
+//console.log(bignum2btcstr(changeValue));
+
+		if (changeValue.compareTo(BigInteger.ZERO) > 0) {
+			//console.log("next");
+			sendTx.addOutput(changeAddress, changeValue);
+			
+		}
+		
+//		console.log(sendTx);
+		var hashType = 1; // SIGHASH_ALL
+		
+		for (var i = 0; i < sendTx.ins.length; i++) {
+			var hash = sendTx.hashTransactionForSignature(selectedOuts[i].script, i, hashType);
+//			console.log(hash);
+			var pubKeyHash = selectedOuts[i].script.simpleOutPubKeyHash();
+//			console.log(pubKeyHash);
+			var signature = key.sign(hash);
+//			console.log(signature);
+			// Append hash type
+			signature.push(parseInt(hashType));
+//			console.log(sendTx.ins.length);
+//			console.log(i);
+			sendTx.ins[i].script = Bitcoin.Script.createInputScript(signature, key.getPub());
+//			console.log(i);
+		}
+
+//		console.log(sendTx);
+		
+		return sendTx;
+	};
 
 app.initialize();
