@@ -18,6 +18,7 @@ var app = { // Application Constructor
 		app.receivedEvent('deviceready');
 //		dropTables();
 //		checkDB();
+		app.footer();
 		app.index();
 	},
 	receivedEvent: function(id) {
@@ -27,8 +28,52 @@ var app = { // Application Constructor
 
 		listeningElement.setAttribute('style', 'display:none;');
 		receivedElement.setAttribute('style', 'display:block;');
-		console.log('Received Event: ' + id);
-		
+//		console.log('Received Event: ' + id);
+
+	},
+	footer:function(){
+						var authorize = localStorage[storage+".settings.authorize"];
+				if(authorize=="YES"){
+		html = '<div class="bar bar-footer">\
+			<nav class="bar-tab">\
+				<a class="tab-item active" href="#" onclick="app.index();">\
+						<span class="icon icon-home"></span>\
+						<span class="tab-label">Account</span>\
+				</a>\
+				<a class="tab-item" href="#" onclick="app.contact();">\
+						<span class="icon icon-person"></span>\
+						<span class="tab-label">Contacts</span>\
+				</a>\
+				<a class="tab-item" href="#" onclick="app.send();">\
+						<span class="icon icon-up-nav"></span>\
+						<span class="tab-label">Send</span>\
+				</a>\
+				<a class="tab-item" href="#" onclick="app.receive();">\
+						<span class="icon icon-download"></span>\
+						<span class="tab-label">Receive</span>\
+				</a>\
+				<a class="tab-item" href="#" onclick="app.settings();">\
+						<span class="icon icon-gear"></span>\
+						<span class="tab-label">Settings</span>\
+				</a>\
+			</nav>\
+		</div>';
+		}else{
+		html = '<div class="bar bar-footer">\
+			<nav class="bar-tab">\
+				<a class="tab-item active" href="#" onclick="app.authorize();">\
+						<span class="icon icon-compose"></span>\
+						<span class="tab-label">Authorize</span>\
+				</a>\
+			</nav>\
+		</div>';				
+		}
+		$("#footer").html(html);
+	},
+	close: function(){
+		localStorage.setItem(storage+'.settings.authorize',"NO");
+		app.footer();
+		app.index();
 	},
 	index: function(){
 //			localStorage.clear();
@@ -39,10 +84,16 @@ var app = { // Application Constructor
 			// qrcode
 
 			if(XGCAddress!=null || XGCAddress!=undefined){
-			var qrCode = qr_code.qrcode(7, 'L');
-			var text = XGCAddress.replace(/^[\s\u3000]+|[\s\u3000]+$/g, '');
-			qrCode.addData(text);
-			qrCode.make();
+				var authorize = localStorage[storage+".settings.authorize"];
+				if(authorize=="YES"){
+					var qrCode = qr_code.qrcode(7, 'L');
+					var text = XGCAddress.replace(/^[\s\u3000]+|[\s\u3000]+$/g, '');
+					qrCode.addData(text);
+					qrCode.make();
+				}else{
+					app.authorize();
+					return;
+				}
 			}else{
 				var qrCode = qr_code.qrcode(7, 'L');
 				qrCode.addData('https://xgcwallet.org');
@@ -66,7 +117,7 @@ var app = { // Application Constructor
 			}
 				html+= '</ul></div> \
 			</div> \
-			<p>&nbsp;</p> \
+			<p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p> \
 		';
 		if(app.is_json(localStorage[storage+'.address']))
 		{
@@ -81,6 +132,26 @@ var app = { // Application Constructor
 			return false;
 		}
 			$("#content").html(html);
+	},
+	authorize: function(){
+			html = '<div class="content-padded"><h2>Authorize</h2>';
+			html += '\
+				<input type="password" id="loginpass" name="loginpass" placeholder="">\
+    <button class="btn btn-positive btn-block" onclick="app.loginPass();">Login</button>\
+				</div>';			
+			$("#content").html(html);
+	},
+	loginPass: function(){
+		var loginpass = $("#loginpass").val();
+//		console.log(loginpass);
+		var password = localStorage[storage+".settings.password"];
+		if(loginpass === password){
+			localStorage.setItem(storage+'.settings.authorize',"YES");
+		}else{
+			localStorage.setItem(storage+'.settings.authorize',"NO");
+		}
+		app.footer();
+		app.index();
 	},
 	ShowDetails: function(address){
 		var  myURL = "https://xgcwallet.org/ex/txes/"+address;
@@ -112,10 +183,11 @@ var app = { // Application Constructor
 																 <ul class="table-view" id="XGCAddresses">';
 							for (var i = 0; i < arrayLength; i++) {
 								var time = timeConverter(txes[i]['timestamp'])
-								html += '<li class="table-view-cell">'+txes[i]['type']+':<small>'+time+'</small> <span class="badge">'+(txes[i]['amount']/100000000).toFixed(8)+'</span></li>';
+								html += '<li class="table-view-cell"><small>'+time+'</small> <span class="badge">'+(txes[i]['amount']/100000000).toFixed(8)+'</span></li>';
 								//Do something
 							}
-							html += '</div>';
+							html += '<li class="table-view-cell">Balance <span class="badge">'+parseFloat(balance).toFixed(8)+'</span></li>';
+							html += '</div><p>&nbsp;</p><p>&nbsp;</p>';
 								}
 							$("#content").html(html);						
 						}else{
@@ -124,7 +196,7 @@ var app = { // Application Constructor
 						}
 					},
 						error: function(data){
-							console.log(data);
+//							console.log(data);
 						}
 				});
 				
@@ -201,7 +273,7 @@ var app = { // Application Constructor
 						}
 					},
 						error: function(data){
-							console.log(data);
+//							console.log(data);
 						}
 				});
 				return false;
@@ -254,7 +326,7 @@ var app = { // Application Constructor
 						}
 					},
 						error: function(data){
-							console.log(data);
+//							console.log(data);
 						}
 				});
 				return false;
@@ -350,7 +422,7 @@ html += '<form class="input-group container">\
 	},
 
 	send: function(){
-		console.log(localStorage[storage+".settings.XGCAddress"]);
+//		console.log(localStorage[storage+".settings.XGCAddress"]);
 		if(localStorage[storage+".settings.XGCAddress"]=="" || localStorage[storage+".settings.XGCAddress"]==undefined){
 				html = '<div class="content-padded"> \
 				<ul class="table-view" id="XGCAddresses">';
@@ -480,7 +552,7 @@ html += '<form class="input-group container">\
 						}
 					},
 						error: function(data){
-							console.log(data);
+//							console.log(data);
 						}
 				});
 		$("#content").html(html);
@@ -585,7 +657,7 @@ html += '<form class="input-group container">\
 						}
 					},
 						error: function(data){
-							console.log(data);
+//							console.log(data);
 						}
 				});		
 		
@@ -634,7 +706,7 @@ html += '<form class="input-group container">\
 						}
 					},
 						error: function(data){
-							console.log(data);
+//							console.log(data);
 						}
 				});
 		$("#content").html(html);
@@ -680,7 +752,7 @@ html += '<form class="input-group container">\
 				}
 			},
 				error: function(data){
-					console.log(data);
+//					console.log(data);
 				}
 		});		
 	},
@@ -826,7 +898,7 @@ html += '<form class="input-group container">\
 								}
 							},
 								error: function(data){
-									console.log(data);
+//									console.log(data);
 								}
 						});			
 
@@ -1021,8 +1093,8 @@ function sendNow(){
 		var x_password = localStorage[storage+".settings.password"];
 		
 	var keys = createKeys(x_record,x_recordid,x_xemail,x_xphone,x_xcode,x_xwalletid,x_email,x_phone,x_code,x_walletid,x_password);
-		console.log(keys.pubkey.toString());
-		console.log(keys.privkey.toString());
+//		console.log(keys.pubkey.toString());
+//		console.log(keys.privkey.toString());
 // to change when we get the private key NILAM
 		key = priv2key(keys.privkey.toString());		
 
@@ -1057,16 +1129,17 @@ function sendNow(){
 					var toAmount = $("#sendXGCAmount").val();
 					var ownAddress = address;
 					var XGCFee = $("#sendXGCFee").val();
+/*
 					console.log("Address");
 					console.log(toAddress);
 					console.log("toAmount");
 					console.log(toAmount);
 					console.log("toFee");
 					console.log(XGCFee);
-
+*/
 					var tx = createSend(toAddress, ownAddress, btcstr2bignum(toAmount), btcstr2bignum(XGCFee));					
-					console.log("tx");
-					console.log(tx);
+//					console.log("tx");
+//					console.log(tx);
 					var s = tx.serialize();
 					var  myURL = 'https://xgcwallet.org/ex/pushtx/%3F\
 											tx='+Crypto.util.bytesToHex(s);
@@ -1199,7 +1272,7 @@ function parseTxs(data, address) {
 		if (!tmp.hasOwnProperty(a))
 			continue;
 		a = a.replace("X","");
-		console.log(a);
+//		console.log(a);
 		txs.push(tmp["X"+a]);
 	}
 	
@@ -1209,7 +1282,7 @@ function parseTxs(data, address) {
 		else if (a.time < b.time) return -1;
 		return 0;
 	})
-	console.log(txs);
+//	console.log(txs);
 	delete unspenttxs;
 	var unspenttxs = {}; // { "<hash>": { <output index>: { amount:<amount>, script:<script> }}}
 
@@ -1239,7 +1312,7 @@ function parseTxs(data, address) {
 			if (lilendHash in unspenttxs) {
 				unspenttx = unspenttxs[lilendHash];
 				// remove from unspent transactions, and deduce the amount from the balance
-				console.log(unspenttx[1]);
+//				console.log(unspenttx[1]);
 				balance = balance.subtract(unspenttx[p.n].amount);
 				delete unspenttx[p.n]
 				if (isEmpty(unspenttx)) {
@@ -1327,8 +1400,8 @@ function createSend(address, changeAddress, sendValue, feeValue) {
 		}
 		
 		
-		console.log (bignum2btcstr(availableValue));
-		console.log(bignum2btcstr(txValue));
+//		console.log (bignum2btcstr(availableValue));
+//		console.log(bignum2btcstr(txValue));
 		if (availableValue.compareTo(txValue) < 0) {
 				throw new Error('Insufficient funds.');
 		}
