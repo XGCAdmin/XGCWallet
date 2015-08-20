@@ -65,6 +65,10 @@ var app = { // Application Constructor
 						<span class="icon icon-compose"></span>\
 						<span class="tab-label">Authorize</span>\
 				</a>\
+				<a class="tab-item active" href="#" onclick="app.startverification();">\
+						<span class="icon icon-compose"></span>\
+						<span class="tab-label">Identification</span>\
+				</a>\
 			</nav>\
 		</div>';				
 		}
