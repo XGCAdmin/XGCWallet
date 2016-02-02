@@ -65,6 +65,10 @@ var app = { // Application Constructor
 						<span class="icon icon-compose"></span>\
 						<span class="tab-label">Authorize</span>\
 				</a>\
+				<a class="tab-item active" href="#" onclick="app.getkycinfo();">\
+						<span class="icon icon-compose"></span>\
+						<span class="tab-label">KYC ID</span>\
+				</a>\
 				<a class="tab-item active" href="#" onclick="app.startverification();">\
 						<span class="icon icon-compose"></span>\
 						<span class="tab-label">Identification</span>\
@@ -496,6 +500,8 @@ html += '<form class="input-group container">\
 
 			html = '<div class="content-padded"> \
 			<h1>Settings</h1> \
+			<button class="btn btn-positive btn-block" onclick="app.checkkycinfo();">Check KYC Info</button> \
+			<p>Wallet requires you to get the KYC ID approved.</p>\
 			<button class="btn btn-positive btn-block" onclick="app.identification();" '+disabled+'>Identification</button> \
 			<p>With identification and verification you can use GreenCoinX to send, receive to your contact email and phone number. </p>\
 			<button class="btn btn-positive btn-block" onclick="app.wallet();">Wallet</button> \
@@ -519,6 +525,10 @@ html += '<form class="input-group container">\
 			$("#content").html(html);
 	},
 	identification: function(){
+		if(localStorage[storage+'.settings.kycid']==""){
+			app.checkkycinfo();
+			return;
+		}
 			html = '\
 			<div class="content-padded"> \
 				<h3>Settings</h3><h2>Identification</h2> \
@@ -532,8 +542,66 @@ html += '<form class="input-group container">\
 			';
 			$("#content").html(html);
 	},	
+	getkycinfo:function(){
+		html = '\
+			<div class="content-padded"> \
+				<h3>KYC ID</h3><h2>Know your customer ID</h2> \
+				<form> \
+					<input type="text" name="kycid" id="kycid" placeholder="A234-S56D1DF3"  />\
+					<a href="#" onclick="app.checkkycinfo();" class="btn btn-positive btn-block"><u>C</u>heck KYC Info</a> \
+				</form> \
+				<p>GreenCoinX / XGCWallet uses KYC ID, it is mandatory for XGCWallet.Mobile. To get your KYC ID visit <a href="https://kycglobal.net" target="_blank">KYCGlobal.net</a>.</p> \
+				<div id="kycresult"></div> \
+				</div> \
+			';
+			$("#content").html(html);
+	},
+	checkkycinfo:function(){
+			var kycid = $("#kycid").val();
+			if (kycid ==""){
+				return false;
+			}
+			var  myURL = "http://kycglobal.net/kyc/info/"+kycid;
+			 $.ajax({
+     url: 'http://query.yahooapis.com/v1/public/yql?q=select * from json where url="'+
+					myURL
+					+'"&format=json&callback=',
+					type: 'GET',
+					dataType: 'json',
+					success: function(data){
+						if(data['query']['results']['json']['success']=="1"){
+							localStorage.setItem(storage+'.settings.kycid',data['query']['results']['json']['kyc_id']);
+							localStorage.setItem(storage+'.settings.kycid.email',data['query']['results']['json']['email']);
+							localStorage.setItem(storage+'.settings.kycid.name.first',data['query']['results']['json']['details']['Name']['first']);
+							localStorage.setItem(storage+'.settings.kycid.name.last',data['query']['results']['json']['details']['Name']['last']);
+							localStorage.setItem(storage+'.settings.kycid.mobile',data['query']['results']['json']['details']['Mobile']);
+							localStorage.setItem(storage+'.settings.kycid.address.address',data['query']['results']['json']['details']['Address']['address']);
+							localStorage.setItem(storage+'.settings.kycid.address.street',data['query']['results']['json']['details']['Address']['street']);
+							localStorage.setItem(storage+'.settings.kycid.address.city',data['query']['results']['json']['details']['Address']['city']);
+							localStorage.setItem(storage+'.settings.kycid.address.zip',data['query']['results']['json']['details']['Address']['zip']);
+							localStorage.setItem(storage+'.settings.kycid.address.state',data['query']['results']['json']['details']['Address']['state']);
+							localStorage.setItem(storage+'.settings.kycid.address.country',data['query']['results']['json']['details']['Address']['country']);
+							localStorage.setItem(storage+'.settings.kycid.birth.date',data['query']['results']['json']['details']['Birth']['date']);
+							localStorage.setItem(storage+'.settings.kycid.birth.place',data['query']['results']['json']['details']['Birth']['place']);
+							localStorage.setItem(storage+'.settings.kycid.tax.id',data['query']['results']['json']['details']['Tax']['id']);
+							localStorage.setItem(storage+'.settings.kycid.tax.country',data['query']['results']['json']['details']['Tax']['country']);
+							localStorage.setItem(storage+'.settings.kycid.driving.id',data['query']['results']['json']['details']['Driving']['id']);
+							localStorage.setItem(storage+'.settings.kycid.driving.country',data['query']['results']['json']['details']['Driving']['country']);
+							
+							$("#kycresult").html("Your KYC ID: " + kycid + " is verified.");
+						}
+					},
+					error: function(data){
+//							console.log(data);
+					}
+					});
+	},
 	startverification: function(){
-			var  myURL = "http://hitarth.org/code/index/"+MyIP;
+		var authorize = localStorage[storage+".settings.authorize"];
+				if(authorize!="YES"){
+					return false;
+				}
+			var  myURL = "http://hitarth.org/code/index/"+MyIP+"/"+localStorage[storage+'.settings.kycid'];
 		  $.ajax({
      url: 'http://query.yahooapis.com/v1/public/yql?q=select * from json where url="'+
 					myURL
