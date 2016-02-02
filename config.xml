@@ -126,9 +126,6 @@
 				<gap:platform name="windows" />
 				<gap:plugin name="org.apache.cordova.contacts" version="0.2.13" />
 
-				<plugin
-        name="NetworkStatus"
-        value="org.apache.cordova.network-information" />
 
 				<gap:config-file platform="android" parent="/manifest">
         <uses-permission name="android.permission.ACCESS_NETWORK_STATE" />
